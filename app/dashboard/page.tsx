@@ -16,7 +16,7 @@ import LocationMap from '@/components/dashboard/location-map'
 import ReportTable from '@/components/dashboard/report-table'
 import ImageGallery from '@/components/dashboard/image-gallery'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000'
 
 interface Report {
   id: number
