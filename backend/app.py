@@ -9,7 +9,18 @@ from werkzeug.utils import secure_filename
 from model import predict_pothole
 
 app = Flask(__name__)
-CORS(app)
+
+# ✅ FIXED CORS (IMPORTANT)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
+# ✅ EXTRA HEADERS FOR PREFLIGHT
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS')
+    return response
+
 
 # ---------------- CONFIG ----------------
 BASE_DIR = os.path.dirname(__file__)
@@ -18,7 +29,6 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 OUTPUT_FOLDER = os.path.join(UPLOAD_FOLDER, 'output')
 DB_PATH = os.path.join(BASE_DIR, 'data', 'roadintel.db')
 
-# Ensure folders exist (VERY IMPORTANT FOR RENDER)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -98,6 +108,15 @@ def home():
 @app.route('/health')
 def health():
     return {"status": "ok"}, 200
+
+
+# ✅ HANDLE PREFLIGHT (VERY IMPORTANT)
+@app.route('/login', methods=['OPTIONS'])
+@app.route('/signup', methods=['OPTIONS'])
+@app.route('/predict', methods=['OPTIONS'])
+@app.route('/reports/<int:report_id>/status', methods=['OPTIONS'])
+def handle_options(**kwargs):
+    return '', 200
 
 
 @app.route('/signup', methods=['POST'])
@@ -185,7 +204,6 @@ def predict():
 
         file.save(filepath)
 
-        # MODEL CALL
         label, avg_confidence, pothole_count, output_path = predict_pothole(filepath)
 
         severity_score, threat_level = calculate_severity_score(
