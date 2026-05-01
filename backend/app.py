@@ -267,6 +267,9 @@ def update_status(report_id):
 
     return jsonify({'message': 'Updated'})
 
+@app.route('/health', methods=['GET'])
+def health():
+    return {"status": "ok"}, 200
 
 @app.route('/stats', methods=['GET'])
 def stats():
