@@ -11,7 +11,14 @@ from model import predict_pothole
 app = Flask(__name__)
 
 # ✅ FIXED CORS (IMPORTANT)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, supports_credentials=True, resources={
+    r"/*": {
+        "origins": [
+            "https://roadintel-snowy.vercel.app",
+            "https://roadintel-git-main-sahilbhoir9833-2787s-projects.vercel.app"
+        ]
+    }
+})
 
 # ✅ EXTRA HEADERS FOR PREFLIGHT
 @app.after_request
