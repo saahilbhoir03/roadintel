@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+// ✅ FIXED: Hardcoded backend
+const API_BASE = "https://roadintel-backend.onrender.com"
 
 export default function AuthPage() {
   const router = useRouter()
@@ -18,11 +19,9 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  // Login state
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
 
-  // Signup state
   const [signupEmail, setSignupEmail] = useState('')
   const [signupPassword, setSignupPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -34,6 +33,9 @@ export default function AuthPage() {
     setLoading(true)
 
     try {
+      // 🔥 wake backend (important for Render)
+      await fetch(`${API_BASE}/health`)
+
       const response = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,16 +52,19 @@ export default function AuthPage() {
           email: data.email,
           role: data.role
         }))
+
         setSuccess('Login successful! Redirecting...')
+
         setTimeout(() => {
-          const role = localStorage.getItem('roadintel_role') || data.role
-          router.push(role === 'admin' ? '/dashboard' : '/upload')
-        }, 1500)
+          router.push(data.role === 'admin' ? '/dashboard' : '/upload')
+        }, 1200)
+
       } else {
         setError(data.error || 'Login failed')
       }
+
     } catch (err) {
-      setError('Connection error. Make sure backend is running.')
+      setError('Backend waking up... try again in 20 seconds')
       console.error(err)
     } finally {
       setLoading(false)
@@ -84,33 +89,33 @@ export default function AuthPage() {
     setLoading(true)
 
     try {
-      const role = localStorage.getItem('roadintel_role') || 'user'
+      await fetch(`${API_BASE}/health`)
+
       const response = await fetch(`${API_BASE}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: signupEmail,
           password: signupPassword,
-          role: role,
+          role: 'user',
         }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        localStorage.setItem('roadintel_user', JSON.stringify({
-          email: data.email,
-          role: role
-        }))
         setSuccess('Account created! Redirecting...')
+
         setTimeout(() => {
-          router.push(role === 'admin' ? '/dashboard' : '/upload')
-        }, 1500)
+          router.push('/upload')
+        }, 1200)
+
       } else {
         setError(data.error || 'Signup failed')
       }
+
     } catch (err) {
-      setError('Connection error. Make sure backend is running.')
+      setError('Backend waking up... try again in 20 seconds')
       console.error(err)
     } finally {
       setLoading(false)
@@ -130,7 +135,6 @@ export default function AuthPage() {
               <TabsTrigger value="signup" className="text-white">Sign Up</TabsTrigger>
             </TabsList>
 
-            {/* Login Tab */}
             <TabsContent value="login" className="space-y-4 mt-6">
               {error && (
                 <Alert className="bg-red-500/10 border-red-500">
@@ -138,6 +142,7 @@ export default function AuthPage() {
                   <AlertDescription className="text-red-500">{error}</AlertDescription>
                 </Alert>
               )}
+
               {success && (
                 <Alert className="bg-green-500/10 border-green-500">
                   <CheckCircle className="h-4 w-4 text-green-500" />
@@ -146,112 +151,55 @@ export default function AuthPage() {
               )}
 
               <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Email</label>
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Password</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    required
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  required
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                />
+                <Button type="submit" disabled={loading} className="w-full">
                   {loading ? 'Logging in...' : 'Login'}
                 </Button>
               </form>
             </TabsContent>
 
-            {/* Signup Tab */}
             <TabsContent value="signup" className="space-y-4 mt-6">
-              {error && (
-                <Alert className="bg-red-500/10 border-red-500">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <AlertDescription className="text-red-500">{error}</AlertDescription>
-                </Alert>
-              )}
-              {success && (
-                <Alert className="bg-green-500/10 border-green-500">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <AlertDescription className="text-green-500">{success}</AlertDescription>
-                </Alert>
-              )}
-
               <form onSubmit={handleSignup} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Email</label>
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Password</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Confirm Password</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    required
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {loading ? 'Creating account...' : 'Sign Up'}
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={signupEmail}
+                  onChange={(e) => setSignupEmail(e.target.value)}
+                  required
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  required
+                />
+                <Input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <Button type="submit" disabled={loading} className="w-full">
+                  {loading ? 'Creating...' : 'Sign Up'}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/')}
-              className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              Back to Home
-            </Button>
-          </div>
         </div>
       </Card>
     </div>
